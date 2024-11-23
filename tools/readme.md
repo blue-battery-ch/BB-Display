@@ -1,4 +1,4 @@
-#Tools for BB-Display
+# Tools for BB-Display
 - Android APK for firmware update
 - shell script for firmware update
 - Windows powershell script for firmare update
