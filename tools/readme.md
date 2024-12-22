@@ -6,6 +6,18 @@
 
 # Firmwareupdate des BB-Display
 
+## iOS, iPadOS
+
+1. **Shortcut installieren:**
+   Öffne die Datei `bb-display.shortcut` um diese unter der App Shortscuts / Kurzbefehle zu installieren
+2. **Kurzbefehl ausführen:**
+   Im der App Kurtzbefehle den Befehl `BB-Display` zum Starten antippen. Der Befehl lädt automatisch eine Liste der verfügbaren Firmwaredateien.
+3. **Firmware laden:**
+   Gewünschte Firmware Version auswählen. Anschliessend wird abgefragt unter welcher Adresse das BB-Display zu erreichen ist.
+4. **Upload abwarten:**
+   Der Upload startet sofort, das BB-Display zeigt dabei die ganze Zeit `Firmare 0%`.
+   Der Vorgang dauert ca. 1 Minute. BB-Display startet anschliessend automatisch neu. 
+
 ## Android
 Die Datei BB-Display-Update-release-1.1.apk.zip laden und auspacken. Anschliessend das APK installieren, ggf. vorher das installieren von APKs in den Einstellungen aktivieren.
 
