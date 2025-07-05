@@ -1,0 +1,101 @@
+name: Copy latest release firmware
+
+on:
+  workflow_dispatch: {}
+  release:
+    types: [released]
+
+jobs:
+  fetch-and-push-firmware:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+
+      - name: Check out the repo
+        uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y jq pandoc
+
+      - name: Get latest release info
+        id: get_release
+        uses: octokit/request-action@v2.x
+        with:
+          route: GET /repos/${{ github.repository }}/releases/latest
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Parse release info and convert Markdown to HTML
+        id: parse_release
+        run: |
+          echo '${{ steps.get_release.outputs.data }}' > release.json
+          TAG=$(jq -r .tag_name release.json)
+          BODY=$(jq -r .body release.json)
+          HTML=$(echo "$BODY" | pandoc -f markdown -t html)
+
+          ASSET_URL=$(jq -r '.assets[] | select(.name | endswith(".bin")) | .browser_download_url' release.json)
+          ASSET_NAME=$(jq -r '.assets[] | select(.name | endswith(".bin")) | .name' release.json)
+          ASSET_ID=$(jq -r '.assets[] | select(.name | endswith(".bin")) | .id' release.json)
+
+          echo "TAG=$TAG" >> $GITHUB_ENV
+          echo "ASSET_URL=$ASSET_URL" >> $GITHUB_ENV
+          echo "ASSET_NAME=$ASSET_NAME" >> $GITHUB_ENV
+          echo "RELEASE_BODY<<EOF" >> $GITHUB_ENV
+          echo "$BODY" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "RELEASE_HTML<<EOF" >> $GITHUB_ENV
+          echo "$HTML" >> $GITHUB_ENV
+          echo "EOF" >> $GITHUB_ENV
+          echo "ASSET_ID=$ASSET_ID" >> $GITHUB_ENV
+
+      - name: Download firmware asset
+        run: curl -L "$ASSET_URL" -o firmware_temp.bin
+
+      - name: Rename firmware if needed
+        run: |
+          PRODUCT=$(basename ${{ github.repository }})
+          if [ "$ASSET_NAME" == "firmware.bin" ]; then
+            NEW_NAME="${PRODUCT}_${TAG}.bin"
+          else
+            NEW_NAME="$ASSET_NAME"
+          fi
+          echo "FIRMWARE_NAME=$NEW_NAME" >> $GITHUB_ENV
+          mv firmware_temp.bin "$NEW_NAME"
+
+      - name: Prepare firmware folder and version.json
+        run: |
+          BRANCH=${{ github.event_name == 'workflow_dispatch' && 'test' || 'main' }}
+          git fetch origin $BRANCH || true
+          if git show-ref --quiet refs/heads/$BRANCH; then
+            git switch $BRANCH
+          else
+            git switch --create $BRANCH
+          fi
+
+          mkdir -p firmware
+          cp "$FIRMWARE_NAME" firmware/
+
+          echo "{ \"version\": \"$TAG\", \"file\": \"$FIRMWARE_NAME\", \"html\": $(echo "$RELEASE_HTML" | jq -Rs .) }" > firmware/version.json
+
+      - name: Commit and push
+        run: |
+          BRANCH=${{ github.event_name == 'workflow_dispatch' && 'test' || 'main' }}
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git switch $BRANCH || git switch -c $BRANCH
+          git add firmware/
+          git commit -m "Add firmware $FIRMWARE_NAME for version $TAG" || echo "Nothing to commit"
+          git push --force-with-lease origin $BRANCH
+
+      - name: Rename release asset if needed
+        if: env.ASSET_NAME == 'firmware.bin'
+        run: |
+          echo "Renaming firmware.bin in release to $FIRMWARE_NAME"
+          curl -X PATCH \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            https://api.github.com/repos/${{ github.repository }}/releases/assets/${{ env.ASSET_ID }} \
+            -d '{"name":"'"${FIRMWARE_NAME}"'"}'
