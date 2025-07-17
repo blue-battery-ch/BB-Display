@@ -1,1 +1,5 @@
-{ "version": "v1.5.1.0", "file": "bb-display_v1.5.1.0.bin", "html": "<p>- Hotspot startet zuverlässiger bei WLAN-Fehlern - Firmware-Updates\ndirekt per Internet, ohne Datei-Umweg - Taupunkt zusätzlich zur\nTemperatur<br />\n- Mehr Daten in Home Assistant: z. B. Truma-Status und\nBoiler-Modus<br />\n- Funktioniert mit und ohne BlueBattery Shunt - Batteriestrom bei\nBlueBattery Basic korrigiert</p>\n" }
+{
+  "version": "v1.5.1.0",
+  "file": "bb-display_v1.5.1.0.bin",
+  "html": "<ul><li>Hotspot startet zuverlässiger bei WLAN-Fehlern</li><li>Firmware-Updates direkt per Internet, ohne Datei-Umweg</li><li>Taupunkt zusätzlich zur Temperatur</li><li>Mehr Daten in Home Assistant: z. B. Truma-Status und Boiler-Modus</li><li>Funktioniert mit und ohne BlueBattery Shunt</li><li>Batteriestrom bei BlueBattery Basic korrigiert</li></ul>"
+}
